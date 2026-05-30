@@ -6,9 +6,9 @@ Aplikasi backend untuk manajemen produk menggunakan Express.js dan MySQL.
 
 ## 🚀 Install Dependensi
 
-### 1. Clone atau Buka Project
+### 1. Clone Project
 ```bash
-cd /path/to/Tugas2-Pengembangan_aplikasi_backend
+git clone https://github.com/GhaniPutra/REST_API_SEDERHANA.git
 ```
 
 ### 2. Install Package Dependencies
