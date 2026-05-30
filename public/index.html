@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Testing Dashboard - Tugas 2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0b0f1a;
+      --bg-card: rgba(22, 28, 45, 0.75);
+      --bg-input: rgba(10, 14, 26, 0.6);
+      --border: rgba(255,255,255,0.07);
+      --border-focus: #818cf8;
+      --text: #f1f5f9;
+      --text-muted: #64748b;
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --green: #22c55e;
+      --green-bg: rgba(34,197,94,0.12);
+      --red: #ef4444;
+      --red-bg: rgba(239,68,68,0.12);
+      --yellow: #eab308;
+      --purple: #a855f7;
+      --purple-bg: rgba(168,85,247,0.12);
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow: 0 8px 32px rgba(0,0,0,0.45);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(99,102,241,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 80%, rgba(168,85,247,0.10) 0%, transparent 50%);
+      pointer-events: none; z-index: 0;
+    }
+
+    .app { position: relative; z-index: 1; padding: 2rem 1.5rem; max-width: 1280px; margin: 0 auto; }
+
+    /* HEADER */
+    .header {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.25rem 1.75rem; backdrop-filter: blur(20px); box-shadow: var(--shadow);
+      margin-bottom: 2rem;
+    }
+    .header h1 {
+      font-size: 1.6rem; font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #c084fc, #f0abfc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .header p { color: var(--text-muted); font-size: 0.82rem; margin-top: 2px; }
+    .badge-author {
+      background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.18);
+      padding: 0.6rem 1rem; border-radius: 10px; text-align: right;
+    }
+    .badge-author strong { display: block; font-size: 0.9rem; color: #e0e7ff; }
+    .badge-author span { font-size: 0.78rem; color: #a5b4fc; }
+
+    /* ENDPOINT INFO BAR */
+    .endpoints-bar {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+    .ep-chip {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 0.7rem 1rem; backdrop-filter: blur(12px); display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.82rem; transition: border-color 0.2s;
+    }
+    .ep-chip:hover { border-color: var(--accent); }
+    .ep-method {
+      font-weight: 700; font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: 0.5px; flex-shrink: 0;
+    }
+    .m-get    { background: var(--green-bg); color: var(--green); }
+    .m-post   { background: rgba(59,130,246,0.12); color: #60a5fa; }
+    .m-put    { background: rgba(234,179,8,0.12); color: var(--yellow); }
+    .m-delete { background: var(--red-bg); color: var(--red); }
+    .ep-path  { color: var(--text-muted); font-family: 'Courier New', monospace; font-size: 0.82rem; }
+
+    /* MAIN GRID */
+    .main { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 960px) { .main { grid-template-columns: 370px 1fr; } }
+
+    /* CARD */
+    .card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 1.5rem; backdrop-filter: blur(20px); box-shadow: var(--shadow);
+      position: relative; overflow: hidden;
+    }
+    .card::after {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--purple)); opacity: 0.7;
+    }
+    .card-title {
+      font-size: 1.05rem; font-weight: 700; margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    /* FORM */
+    .form-group { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 1rem; }
+    .form-group label { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); }
+    .form-control {
+      background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 0.65rem 0.75rem; color: var(--text); font-family: inherit; font-size: 0.88rem;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    select.form-control { cursor: pointer; }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      border: none; border-radius: var(--radius-sm); padding: 0.65rem 1.1rem;
+      font-family: inherit; font-weight: 600; font-size: 0.85rem; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.2s, background 0.2s; color: #fff;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent); }
+    .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 4px 20px rgba(99,102,241,0.35); }
+    .btn-success { background: var(--green); }
+    .btn-success:hover { background: #16a34a; }
+    .btn-danger { background: var(--red); }
+    .btn-danger:hover { background: #dc2626; }
+    .btn-warn { background: var(--yellow); color: #1a1a1a; }
+    .btn-warn:hover { background: #ca8a04; }
+    .btn-sm { padding: 0.35rem 0.65rem; font-size: 0.78rem; border-radius: 6px; }
+    .btn-xs { padding: 0.25rem 0.45rem; font-size: 0.72rem; border-radius: 5px; }
+
+    /* CATEGORY LIST */
+    .cat-section { margin-top: 0.75rem; }
+    .cat-section-label { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .cat-list {
+      max-height: 220px; overflow-y: auto; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); background: var(--bg-input); padding: 0.25rem;
+    }
+    .cat-list::-webkit-scrollbar { width: 4px; }
+    .cat-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .cat-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.5rem 0.6rem; border-radius: 6px; font-size: 0.82rem;
+      transition: background 0.15s;
+    }
+    .cat-item:hover { background: rgba(255,255,255,0.03); }
+    .cat-item-left { display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0; }
+    .cat-item-left .cat-id { color: var(--text-muted); font-size: 0.72rem; flex-shrink: 0; }
+    .cat-item-left .cat-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cat-item-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+    .cat-empty { text-align: center; color: var(--text-muted); padding: 1rem; font-size: 0.8rem; }
+
+    /* INLINE EDIT INPUT (category) */
+    .cat-edit-input {
+      background: rgba(0,0,0,0.4); border: 1px solid var(--accent); border-radius: 4px;
+      padding: 0.2rem 0.4rem; color: #fff; font-family: inherit; font-size: 0.82rem;
+      outline: none; width: 100%;
+    }
+
+    /* TABLE */
+    .table-wrap {
+      overflow-x: auto; border: 1px solid var(--border);
+      border-radius: var(--radius-sm); background: rgba(10,14,26,0.25);
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    thead th {
+      text-align: left; padding: 0.85rem 1rem; font-weight: 600; font-size: 0.78rem;
+      text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+      background: rgba(10,14,26,0.5); border-bottom: 1px solid var(--border);
+    }
+    tbody td { padding: 0.8rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; }
+    tbody tr { transition: background 0.15s; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody tr:last-child td { border-bottom: none; }
+
+    .badge-cat {
+      display: inline-block; background: var(--purple-bg); color: #d8b4fe;
+      padding: 0.2rem 0.55rem; border-radius: 6px; font-size: 0.75rem; font-weight: 500;
+    }
+
+    .edit-input {
+      width: 90px; background: rgba(0,0,0,0.35); border: 1px solid var(--border);
+      border-radius: 5px; padding: 0.3rem 0.4rem; color: #fff; font-family: inherit;
+      font-size: 0.85rem; text-align: center; transition: border-color 0.2s;
+    }
+    .edit-input:focus { border-color: var(--accent); outline: none; }
+
+    .actions { display: flex; gap: 0.4rem; }
+
+    .list-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+    .search { width: 240px; }
+
+    .empty { text-align: center; color: var(--text-muted); padding: 3rem 1rem; }
+    .empty .icon { font-size: 2.5rem; opacity: 0.4; margin-bottom: 0.75rem; }
+
+    /* TOAST */
+    #toasts { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.6rem; z-index: 9999; }
+    .toast {
+      min-width: 300px; padding: 0.85rem 1.25rem; border-radius: var(--radius-sm);
+      background: rgba(22,28,45,0.92); backdrop-filter: blur(12px); border-left: 4px solid var(--accent);
+      color: #fff; font-size: 0.84rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transform: translateX(120%); transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+      display: flex; align-items: center; gap: 0.6rem;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast-ok { border-left-color: var(--green); }
+    .toast-err { border-left-color: var(--red); }
+
+    @media (max-width: 600px) {
+      .app { padding: 1rem; }
+      .header h1 { font-size: 1.25rem; }
+      .search { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div>
+      <h1>🚀 API Testing Dashboard</h1>
+      <p>Tugas 2 — Pengembangan Aplikasi Backend (ExpressJS &amp; MySQL)</p>
+    </div>
+    <div class="badge-author">
+      <strong>Akmal Ghani Wijaya Putra</strong>
+      <span>5230411217 · IF-D</span>
+    </div>
+  </header>
+
+  <!-- ENDPOINT INFO -->
+  <section class="endpoints-bar">
+    <div class="ep-chip"><span class="ep-method m-get">GET</span><span class="ep-path">/api/products</span></div>
+    <div class="ep-chip"><span class="ep-method m-post">POST</span><span class="ep-path">/api/products</span></div>
+    <div class="ep-chip"><span class="ep-method m-put">PUT</span><span class="ep-path">/api/products/:id</span></div>
+    <div class="ep-chip"><span class="ep-method m-delete">DELETE</span><span class="ep-path">/api/products/:id</span></div>
+  </section>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT COLUMN -->
+    <div style="display:flex;flex-direction:column;gap:2rem;">
+
+      <!-- KATEGORI -->
+      <div class="card">
+        <h2 class="card-title"><span class="icon">🏷️</span> Manajemen Kategori</h2>
+        <form id="formCat">
+          <div class="form-group">
+            <label for="catName">Nama Kategori Baru</label>
+            <input type="text" id="catName" class="form-control" placeholder="Contoh: Elektronik" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">＋ Tambah Kategori</button>
+        </form>
+        <div class="cat-section">
+          <p class="cat-section-label">Daftar Kategori</p>
+          <div class="cat-list" id="catList"></div>
+        </div>
+      </div>
+
+      <!-- TAMBAH PRODUK -->
+      <div class="card">
+        <h2 class="card-title"><span class="icon">📦</span> Tambah Produk Baru</h2>
+        <form id="formProd">
+          <div class="form-group">
+            <label for="prodName">Nama Barang</label>
+            <input type="text" id="prodName" class="form-control" placeholder="Masukkan nama barang" required>
+          </div>
+          <div class="form-group">
+            <label for="prodPrice">Harga (Rp)</label>
+            <input type="number" id="prodPrice" class="form-control" placeholder="Contoh: 150000" min="0" required>
+          </div>
+          <div class="form-group">
+            <label for="prodStock">Jumlah Stok</label>
+            <input type="number" id="prodStock" class="form-control" placeholder="Contoh: 25" min="0" required>
+          </div>
+          <div class="form-group">
+            <label for="prodCat">Kategori</label>
+            <select id="prodCat" class="form-control" required>
+              <option value="" disabled selected>— Pilih kategori —</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%">💾 Simpan Produk</button>
+        </form>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="card" style="min-height:480px;">
+      <div class="list-header">
+        <h2 class="card-title" style="border:none;padding:0;margin:0">
+          <span class="icon">📋</span> Daftar Produk
+        </h2>
+        <input type="text" id="search" class="form-control search" placeholder="🔍 Cari produk...">
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nama Produk</th>
+              <th>Kategori</th>
+              <th style="text-align:center">Harga (Rp)</th>
+              <th style="text-align:center">Stok</th>
+              <th style="text-align:center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="prodBody"></tbody>
+        </table>
+      </div>
+
+      <div id="emptyState" class="empty" style="display:none">
+        <div class="icon">📭</div>
+        <p>Belum ada produk. Tambahkan produk baru di form sebelah kiri.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div id="toasts"></div>
+
+<script>
+  /* ========== STATE ========== */
+  let products = [];
+  let categories = [];
+
+  /* ========== DOM ========== */
+  const $ = id => document.getElementById(id);
+
+  const formCat   = $('formCat');
+  const catName   = $('catName');
+  const catList   = $('catList');
+  const formProd  = $('formProd');
+  const prodName  = $('prodName');
+  const prodPrice = $('prodPrice');
+  const prodStock = $('prodStock');
+  const prodCat   = $('prodCat');
+  const prodBody  = $('prodBody');
+  const emptyState= $('emptyState');
+  const search    = $('search');
+  const toasts    = $('toasts');
+
+  /* ========== TOAST ========== */
+  function toast(msg, ok = true) {
+    const el = document.createElement('div');
+    el.className = `toast ${ok ? 'toast-ok' : 'toast-err'}`;
+    el.textContent = msg;
+    toasts.appendChild(el);
+    requestAnimationFrame(() => el.classList.add('show'));
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, 3000);
+  }
+
+  /* ========== FETCH HELPER ========== */
+  async function api(path, opts = {}) {
+    const res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
+    });
+    return res.json();
+  }
+
+  /* ==============================================
+     CATEGORIES
+     ============================================== */
+  async function loadCategories() {
+    try {
+      const res = await api('/api/categories');
+      if (res.success) { categories = res.data; renderCategories(); }
+    } catch { toast('Gagal memuat kategori', false); }
+  }
+
+  function renderCategories() {
+    // sidebar list
+    if (categories.length === 0) {
+      catList.innerHTML = '<div class="cat-empty">Belum ada kategori</div>';
+    } else {
+      catList.innerHTML = categories.map(c => `
+        <div class="cat-item" id="cat-row-${c.id}">
+          <div class="cat-item-left">
+            <span class="cat-id">#${c.id}</span>
+            <span class="cat-name" id="cat-name-display-${c.id}">${c.name}</span>
+            <input type="text" class="cat-edit-input" id="cat-edit-${c.id}" value="${c.name}" style="display:none">
+          </div>
+          <div class="cat-item-actions">
+            <button class="btn btn-warn btn-xs" id="cat-edit-btn-${c.id}" onclick="toggleEditCat(${c.id})" title="Edit">✎</button>
+            <button class="btn btn-success btn-xs" id="cat-save-btn-${c.id}" onclick="saveCat(${c.id})" style="display:none" title="Simpan">✓</button>
+            <button class="btn btn-danger btn-xs" onclick="deleteCat(${c.id})" title="Hapus">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // select dropdown
+    const cur = prodCat.value;
+    prodCat.innerHTML = '<option value="" disabled selected>— Pilih kategori —</option>'
+      + categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    if (categories.some(c => c.name === cur)) prodCat.value = cur;
+  }
+
+  // ADD category
+  formCat.addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = catName.value.trim();
+    if (!name) return;
+    try {
+      const res = await api('/api/categories', { method: 'POST', body: { name } });
+      if (res.success) { toast(`Kategori "${name}" ditambahkan`); catName.value = ''; loadCategories(); }
+      else toast(res.message, false);
+    } catch { toast('Gagal menambah kategori', false); }
+  });
+
+  // TOGGLE inline edit mode for a category
+  function toggleEditCat(id) {
+    const display = $(`cat-name-display-${id}`);
+    const input   = $(`cat-edit-${id}`);
+    const editBtn = $(`cat-edit-btn-${id}`);
+    const saveBtn = $(`cat-save-btn-${id}`);
+
+    const isEditing = input.style.display !== 'none';
+
+    if (isEditing) {
+      // cancel edit
+      input.style.display = 'none';
+      display.style.display = '';
+      editBtn.textContent = '✎';
+      saveBtn.style.display = 'none';
+    } else {
+      // enter edit mode
+      input.style.display = '';
+      input.value = display.textContent;
+      display.style.display = 'none';
+      editBtn.textContent = '✕';
+      saveBtn.style.display = '';
+      input.focus();
+      input.select();
+    }
+  }
+
+  // SAVE (PUT) category
+  async function saveCat(id) {
+    const input = $(`cat-edit-${id}`);
+    const name = input.value.trim();
+    if (!name) { toast('Nama kategori tidak boleh kosong', false); return; }
+
+    try {
+      const res = await api(`/api/categories/${id}`, { method: 'PUT', body: { name } });
+      if (res.success) {
+        toast('Kategori berhasil diupdate');
+        loadCategories();
+        loadProducts(); // refresh produk juga karena mungkin ada perubahan nama kategori
+      } else {
+        toast(res.message, false);
+      }
+    } catch { toast('Gagal mengupdate kategori', false); }
+  }
+
+  // DELETE category
+  async function deleteCat(id) {
+    if (!confirm('Yakin ingin menghapus kategori ini?')) return;
+    try {
+      const res = await api(`/api/categories/${id}`, { method: 'DELETE' });
+      if (res.success) { toast('Kategori dihapus'); loadCategories(); }
+      else toast(res.message, false);
+    } catch { toast('Gagal menghapus kategori', false); }
+  }
+
+  /* ==============================================
+     PRODUCTS
+     ============================================== */
+  async function loadProducts() {
+    try {
+      const res = await api('/api/products');
+      if (res.success) { products = res.data; renderProducts(products); }
+    } catch { toast('Gagal memuat produk', false); }
+  }
+
+  function renderProducts(list) {
+    if (list.length === 0) {
+      prodBody.innerHTML = '';
+      emptyState.style.display = 'block';
+      return;
+    }
+    emptyState.style.display = 'none';
+    prodBody.innerHTML = list.map(p => `
+      <tr>
+        <td style="color:var(--text-muted)">#${p.id}</td>
+        <td><strong>${p.name}</strong></td>
+        <td><span class="badge-cat">${p.category}</span></td>
+        <td style="text-align:center">
+          <input type="number" class="edit-input" id="ep-${p.id}" value="${p.price}" min="0">
+        </td>
+        <td style="text-align:center">
+          <input type="number" class="edit-input" id="es-${p.id}" value="${p.stock}" min="0" style="width:70px">
+        </td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-success btn-sm" onclick="updateProd(${p.id})">✓ Update</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteProd(${p.id})">✕</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ADD product
+  formProd.addEventListener('submit', async e => {
+    e.preventDefault();
+    const body = {
+      name: prodName.value.trim(),
+      price: parseInt(prodPrice.value),
+      stock: parseInt(prodStock.value),
+      category: prodCat.value
+    };
+    if (!body.name || !body.category) { toast('Lengkapi semua field', false); return; }
+    try {
+      const res = await api('/api/products', { method: 'POST', body });
+      if (res.success) { toast(`Produk "${body.name}" ditambahkan`); formProd.reset(); loadProducts(); }
+      else toast(res.message, false);
+    } catch { toast('Gagal menambah produk', false); }
+  });
+
+  // UPDATE product (PUT)
+  async function updateProd(id) {
+    const price = parseInt($(`ep-${id}`).value);
+    const stock = parseInt($(`es-${id}`).value);
+    if (isNaN(price) || isNaN(stock)) { toast('Harga/Stok tidak valid', false); return; }
+    try {
+      const res = await api(`/api/products/${id}`, { method: 'PUT', body: { price, stock } });
+      if (res.success) { toast('Produk berhasil diupdate'); loadProducts(); }
+      else toast(res.message, false);
+    } catch { toast('Gagal mengupdate produk', false); }
+  }
+
+  // DELETE product
+  async function deleteProd(id) {
+    if (!confirm('Yakin ingin menghapus produk ini?')) return;
+    try {
+      const res = await api(`/api/products/${id}`, { method: 'DELETE' });
+      if (res.success) { toast('Produk dihapus'); loadProducts(); }
+      else toast(res.message, false);
+    } catch { toast('Gagal menghapus produk', false); }
+  }
+
+  // SEARCH
+  search.addEventListener('input', e => {
+    const q = e.target.value.toLowerCase();
+    renderProducts(products.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q)));
+  });
+
+  /* ========== INIT ========== */
+  loadCategories();
+  loadProducts();
+</script>
+</body>
+</html>
